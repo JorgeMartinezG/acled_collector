@@ -275,15 +275,12 @@ fn get_config() -> Config {
 }
 
 fn main() {
-    use crate::incidents::dsl::incidents;
-    use schema::incidents as incidents_table;
-
     let config = get_config();
 
     let conn = PgConnection::establish("postgres://postgres:postgres@localhost:5433/postgres")
         .expect("Error connecting to database");
 
-    let results = incidents
+    let results = incidents::table
         .limit(5)
         .load::<Incident>(&conn)
         .expect("Error loading incidents");
@@ -300,7 +297,7 @@ fn main() {
         .json()
         .expect("Could not parse to json");
 
-    let items: Vec<Incident> = diesel::insert_into(incidents_table::table)
+    let items: Vec<Incident> = diesel::insert_into(incidents::table)
         .values(res.data)
         .get_results(&conn)
         .expect("Failed saving results");
