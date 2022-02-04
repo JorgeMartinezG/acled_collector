@@ -1,4 +1,7 @@
 table! {
+    use diesel::sql_types::*;
+    use crate::sql_types::*;
+
     incidents (data_id) {
         data_id -> Int8,
         iso -> Int8,
@@ -22,8 +25,6 @@ table! {
         admin2 -> Varchar,
         admin3 -> Varchar,
         location -> Varchar,
-        latitude -> Float8,
-        longitude -> Float8,
         geo_precision -> Int8,
         source -> Varchar,
         source_scale -> Varchar,
@@ -31,10 +32,14 @@ table! {
         fatalities -> Int8,
         timestamp -> Int8,
         iso3 -> Varchar,
+        geom -> Geometry,
     }
 }
 
 table! {
+    use diesel::sql_types::*;
+    use crate::sql_types::*;
+
     spatial_ref_sys (srid) {
         srid -> Int4,
         auth_name -> Nullable<Varchar>,

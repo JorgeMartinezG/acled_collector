@@ -22,13 +22,12 @@ CREATE TABLE incidents (
     admin2 VARCHAR NOT NULL,
     admin3 VARCHAR NOT NULL,
     location VARCHAR NOT NULL,
-    latitude FLOAT NOT NULL,
-    longitude FLOAT NOT NULL,
     geo_precision BIGINT NOT NULL,
     source VARCHAR NOT NULL,
     source_scale VARCHAR NOT NULL,
     notes VARCHAR NOT NULL,
     fatalities BIGINT NOT NULL,
     timestamp BIGINT NOT NULL,
-    iso3 VARCHAR NOT NULL
+    iso3 VARCHAR NOT NULL,
+    geom GEOMETRY(POINT, 4326) NOT NULL
 )

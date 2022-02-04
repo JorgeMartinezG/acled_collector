@@ -2,10 +2,11 @@
 extern crate diesel;
 
 pub mod schema;
+pub mod sql_types;
 
 use self::schema::incidents;
 use chrono::NaiveDate;
-use diesel::pg::PgConnection;
+
 use diesel::prelude::*;
 use reqwest::blocking::Client;
 
@@ -13,8 +14,24 @@ use serde_json::Value;
 
 use serde::{Deserialize, Deserializer};
 
+use postgis::ewkb::Point;
 use std::fs::read_to_string;
 use toml;
+
+use std::io::Cursor;
+
+use diesel::backend::Backend;
+use diesel::deserialize::{self, FromSql};
+use diesel::pg::Pg;
+
+use diesel::serialize::{self, IsNull, Output, ToSql};
+use postgis::ewkb::{AsEwkbPoint, EwkbRead, EwkbWrite, GeometryT};
+
+use sql_types::Geometry;
+
+#[derive(Debug, AsExpression, FromSqlRow)]
+#[sql_type = "Geometry"]
+struct PointType(Point);
 
 #[derive(Deserialize)]
 struct AcledApiParams {
@@ -22,12 +39,6 @@ struct AcledApiParams {
     key: String,
     email: String,
 }
-
-// impl AcledApiParams {
-//     fn to_url_params(&self) -> Vec<(&str, &str)> {
-//         vec![("key", &self.key), ("email", &self.email)]
-//     }
-// }
 
 #[derive(Deserialize)]
 struct Config {
@@ -39,48 +50,6 @@ struct Config {
 struct Database {
     hostname: String,
 }
-
-#[derive(Deserialize, Debug)]
-struct Point {
-    latitude: f64,
-    longitude: f64,
-}
-
-// #[derive(Insertable, Debug)]
-// #[table_name = "incidents"]
-// struct NewIncident {
-//     data_id: i64,
-//     iso: i64,
-//     event_id_cnty: String,
-//     event_id_no_cnty: i64,
-//     event_date: NaiveDate,
-//     year: i64,
-//     time_precision: i64,
-//     event_type: String,
-//     sub_event_type: String,
-//     actor1: String,
-//     assoc_actor_1: String,
-//     inter1: i64,
-//     actor2: String,
-//     assoc_actor_2: String,
-//     inter2: i64,
-//     interaction: String,
-//     region: String,
-//     country: String,
-//     admin1: String,
-//     admin2: String,
-//     admin3: String,
-//     location: String,
-//     latitude: f64,
-//     longitude: f64,
-//     geo_precision: i64,
-//     source: String,
-//     source_scale: String,
-//     notes: String,
-//     fatalities: i64,
-//     timestamp: i64,
-//     iso3: String,
-// }
 
 #[derive(Queryable, Debug, Insertable)]
 #[table_name = "incidents"]
@@ -107,8 +76,6 @@ struct Incident {
     admin2: String,
     admin3: String,
     location: String,
-    latitude: f64,
-    longitude: f64,
     geo_precision: i64,
     source: String,
     source_scale: String,
@@ -116,6 +83,26 @@ struct Incident {
     fatalities: i64,
     timestamp: i64,
     iso3: String,
+    geom: PointType,
+}
+
+impl FromSql<Geometry, Pg> for PointType {
+    fn from_sql(bytes: Option<&<Pg as Backend>::RawValue>) -> deserialize::Result<Self> {
+        let bytes = not_none!(bytes);
+        let mut r = Cursor::new(bytes);
+        let geom = GeometryT::read_ewkb(&mut r)?;
+        return match geom {
+            postgis::ewkb::GeometryT::Point(point) => Ok(PointType(point)),
+            _ => Err("Geometry is not a point".into()),
+        };
+    }
+}
+
+impl<Db: Backend> ToSql<Geometry, Db> for PointType {
+    fn to_sql<W: std::io::Write>(&self, out: &mut Output<W, Db>) -> serialize::Result {
+        self.0.as_ewkb().write_ewkb(out)?;
+        Ok(IsNull::No)
+    }
 }
 
 impl<'de> Deserialize<'de> for Incident {
@@ -225,8 +212,6 @@ impl<'de> Deserialize<'de> for Incident {
             admin2: json.get("admin2").expect("admin2").to_string(),
             admin3: json.get("admin3").expect("admin3").to_string(),
             location: json.get("location").expect("location").to_string(),
-            latitude: latitude,
-            longitude: longitude,
             geo_precision: json
                 .get("geo_precision")
                 .expect("geo_precision not found")
@@ -252,6 +237,7 @@ impl<'de> Deserialize<'de> for Incident {
                 .parse::<i64>()
                 .expect("Failed parsing timestamp"),
             iso3: json.get("iso3").expect("iso3").to_string(),
+            geom: PointType(Point::new(longitude, latitude, Some(4326))),
         })
     }
 }
@@ -277,16 +263,6 @@ fn get_config() -> Config {
 fn main() {
     let config = get_config();
 
-    let conn = PgConnection::establish("postgres://postgres:postgres@localhost:5433/postgres")
-        .expect("Error connecting to database");
-
-    let results = incidents::table
-        .limit(5)
-        .load::<Incident>(&conn)
-        .expect("Error loading incidents");
-
-    println!("{:?}", results);
-
     let client = Client::new();
     let acled_params = &config.acled_params;
     let res: Response = client
@@ -296,6 +272,18 @@ fn main() {
         .expect("Request failed")
         .json()
         .expect("Could not parse to json");
+
+    res.data.iter().for_each(|i| println!("{:?}", i));
+
+    let conn = PgConnection::establish("postgres://postgres:postgres@localhost:5433/postgres")
+        .expect("Error connecting to database");
+
+    let results = incidents::table
+        .limit(5)
+        .load::<Incident>(&conn)
+        .expect("Error loading incidents");
+
+    println!("{:?}", results);
 
     let items: Vec<Incident> = diesel::insert_into(incidents::table)
         .values(res.data)
