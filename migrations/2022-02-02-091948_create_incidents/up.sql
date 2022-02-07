@@ -1,5 +1,7 @@
+CREATE SCHEMA IF NOT EXISTS acled;
+
 -- Your SQL goes here
-CREATE TABLE incidents (
+CREATE TABLE acled.incidents (
     data_id BIGINT PRIMARY KEY,
     iso BIGINT NOT NULL,
     event_id_cnty VARCHAR NOT NULL,

@@ -1,11 +1,13 @@
 #[macro_use]
 extern crate diesel;
 
+pub mod config;
 pub mod schema;
 pub mod sql_types;
 
-use self::schema::incidents;
+use self::schema::acled::incidents;
 use chrono::NaiveDate;
+use config::Config;
 
 use diesel::prelude::*;
 use reqwest::blocking::Client;
@@ -32,24 +34,6 @@ use sql_types::Geometry;
 #[derive(Debug, AsExpression, FromSqlRow)]
 #[sql_type = "Geometry"]
 struct PointType(Point);
-
-#[derive(Deserialize)]
-struct AcledApiParams {
-    api_url: String,
-    key: String,
-    email: String,
-}
-
-#[derive(Deserialize)]
-struct Config {
-    database: Database,
-    acled_params: AcledApiParams,
-}
-
-#[derive(Deserialize)]
-struct Database {
-    hostname: String,
-}
 
 #[derive(Queryable, Debug, Insertable)]
 #[table_name = "incidents"]
@@ -263,6 +247,12 @@ fn get_config() -> Config {
 fn main() {
     let config = get_config();
 
+    let db_string = config.get_database_url();
+
+    println!("{:?}", db_string);
+
+    /*
+
     let client = Client::new();
     let acled_params = &config.acled_params;
     let res: Response = client
@@ -291,4 +281,6 @@ fn main() {
         .expect("Failed saving results");
 
     items.iter().for_each(|item| println!("{:?}", item));
+
+    */
 }
