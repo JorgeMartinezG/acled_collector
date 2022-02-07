@@ -7,7 +7,7 @@ pub mod sql_types;
 
 use self::schema::acled::incidents;
 use chrono::NaiveDate;
-use config::Config;
+use config::{Config, RequestParams};
 
 use diesel::prelude::*;
 use reqwest::blocking::Client;
@@ -247,23 +247,21 @@ fn get_config() -> Config {
 fn main() {
     let config = get_config();
 
-    let db_string = config.get_database_url();
+    //let db_string: String = config.get_database_url();
+    let (url, key, email) = config.get_acled_credentials();
 
-    println!("{:?}", db_string);
-
-    /*
+    let request_params = RequestParams {
+        key: key,
+        email: email,
+        page: 1,
+    };
 
     let client = Client::new();
-    let acled_params = &config.acled_params;
-    let res: Response = client
-        .get(&acled_params.api_url)
-        .query(&[("key", &acled_params.key), ("email", &acled_params.email)])
-        .send()
-        .expect("Request failed")
-        .json()
-        .expect("Could not parse to json");
+    let res = client.get(url).query(&request_params);
 
-    res.data.iter().for_each(|i| println!("{:?}", i));
+    println!("{:?}", res);
+
+    /*
 
     let conn = PgConnection::establish("postgres://postgres:postgres@localhost:5433/postgres")
         .expect("Error connecting to database");
