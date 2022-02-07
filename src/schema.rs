@@ -1,7 +1,7 @@
 pub mod acled {
     table! {
         use diesel::sql_types::*;
-        use crate::sql_types::*;
+        use crate::db::Geometry;
 
         acled.incidents (data_id) {
             data_id -> Int8,
