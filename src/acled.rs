@@ -3,6 +3,8 @@ use chrono::NaiveDate;
 use serde::ser::{Serialize, SerializeStruct, Serializer};
 use serde::{Deserialize, Deserializer};
 
+use reqwest::blocking::Client;
+
 use postgis::ewkb::Point;
 
 use serde_json::Value;
@@ -51,28 +53,30 @@ pub struct APIParams {
     email: String,
 }
 
+#[derive(Debug)]
+pub struct AcledRequest<'a> {
+    client: Client,
+    params: &'a APIParams,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct Response {
+    status: u8,
+    success: bool,
+    last_update: i32,
+    count: u32,
+    data: Vec<Incident>,
+    filename: String,
+}
+
 pub struct APIRequest<'a> {
     pub key: &'a str,
     pub email: &'a str,
     pub page: u8,
 }
 
-impl<'a> Serialize for APIRequest<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("APIRequest", 4)?;
-        s.serialize_field("key", &self.key)?;
-        s.serialize_field("email", &self.email)?;
-        s.serialize_field("page", &self.page)?;
-
-        s.end()
-    }
-}
-
 impl APIParams {
-    pub fn get_acled_credentials(&self) -> (&str, &str, &str) {
+    pub fn get_credentials(&self) -> (&str, &str, &str) {
         return (&self.api_url, &self.key, &self.email);
     }
 }
@@ -214,12 +218,41 @@ impl<'de> Deserialize<'de> for Incident {
     }
 }
 
-#[derive(Deserialize, Debug)]
-struct Response {
-    status: u8,
-    success: bool,
-    last_update: i32,
-    count: u32,
-    data: Vec<Incident>,
-    filename: String,
+impl<'a> Serialize for APIRequest<'a> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("APIRequest", 4)?;
+        s.serialize_field("key", &self.key)?;
+        s.serialize_field("email", &self.email)?;
+        s.serialize_field("page", &self.page)?;
+
+        s.end()
+    }
+}
+
+impl<'a> AcledRequest<'a> {
+    pub fn new(params: &'a APIParams) -> Self {
+        AcledRequest {
+            client: Client::new(),
+            params: params,
+        }
+    }
+
+    pub fn get_response(&self) -> Response {
+        let request_params = APIRequest {
+            key: &self.params.key,
+            email: &self.params.email,
+            page: 1,
+        };
+
+        self.client
+            .get(&self.params.api_url)
+            .query(&request_params)
+            .send()
+            .expect("Failed running request")
+            .json()
+            .expect("Failed parsing json")
+    }
 }

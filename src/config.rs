@@ -9,9 +9,9 @@ use std::fs::read_to_string;
 
 #[derive(Deserialize, Debug)]
 pub struct Config {
-    database: Database,
-    acled_params: APIParams,
-    countries: HashMap<String, String>,
+    pub database: Database,
+    pub acled_params: APIParams,
+    pub countries: HashMap<String, String>,
 }
 
 impl Config {

@@ -6,17 +6,20 @@ mod config;
 mod db;
 mod schema;
 
-use chrono::NaiveDate;
 use config::Config;
-use reqwest::blocking::Client;
-
 use serde_json::Value;
 
 use toml;
 
+use acled::AcledRequest;
+
 fn main() {
     let config = Config::new();
     println!("{:?}", config);
+
+    let acled = AcledRequest::new(&config.acled_params);
+
+    println!("{:?}", acled);
 
     /*
 
