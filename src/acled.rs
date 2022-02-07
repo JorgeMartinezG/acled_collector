@@ -75,12 +75,6 @@ pub struct APIRequest<'a> {
     pub page: u8,
 }
 
-impl APIParams {
-    pub fn get_credentials(&self) -> (&str, &str, &str) {
-        return (&self.api_url, &self.key, &self.email);
-    }
-}
-
 impl<'de> Deserialize<'de> for Incident {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
