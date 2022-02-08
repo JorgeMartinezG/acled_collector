@@ -20,7 +20,7 @@ pub struct Database {
 impl Database {
     pub fn get_url(&self) -> String {
         format!(
-            "postgis://{}:{}@{}:{}/{}",
+            "postgres://{}:{}@{}:{}/{}",
             self.user, self.pw, self.host, self.port, self.name
         )
     }

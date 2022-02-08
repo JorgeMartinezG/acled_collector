@@ -1,4 +1,4 @@
-mod incident;
+pub mod incident;
 mod request;
 mod response;
 
