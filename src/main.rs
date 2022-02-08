@@ -7,9 +7,6 @@ mod db;
 mod schema;
 
 use config::Config;
-use serde_json::Value;
-
-use toml;
 
 use acled::AcledClient;
 
@@ -27,20 +24,6 @@ fn main() {
         .for_each(|res| println!("{}", res.iso3));
 
     /*
-
-    //let db_string: String = config.get_database_url();
-    let (url, key, email) = config.get_acled_credentials();
-
-    let request_params = RequestParams {
-        key: key,
-        email: email,
-        page: 1,
-    };
-
-    let client = Client::new();
-    let res = client.get(url).query(&request_params);
-
-    println!("{:?}", res);
 
     let conn = PgConnection::establish("postgres://postgres:postgres@localhost:5433/postgres")
         .expect("Error connecting to database");
