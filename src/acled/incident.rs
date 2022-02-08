@@ -1,15 +1,9 @@
 use crate::db::PointType;
-use chrono::{Duration, NaiveDate, Utc};
-use serde::ser::{Serialize, SerializeStruct, Serializer};
-use serde::{Deserialize, Deserializer};
-
-use reqwest::blocking::Client;
-
-use postgis::ewkb::Point;
-
-use serde_json::Value;
-
 use crate::schema::acled::incidents;
+use chrono::NaiveDate;
+use postgis::ewkb::Point;
+use serde::{Deserialize, Deserializer};
+use serde_json::Value;
 
 #[derive(Queryable, Debug, Insertable)]
 #[table_name = "incidents"]
@@ -44,42 +38,6 @@ pub struct Incident {
     timestamp: i64,
     iso3: String,
     geom: PointType,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct APIParams {
-    api_url: String,
-    key: String,
-    email: String,
-}
-
-#[derive(Debug)]
-pub struct AcledClient<'a> {
-    client: Client,
-    params: &'a APIParams,
-    start_date: NaiveDate,
-    end_date: NaiveDate,
-    iso: u16,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct Response {
-    pub status: u8,
-    pub success: bool,
-    pub last_update: i32,
-    pub count: u32,
-    pub data: Vec<Incident>,
-    pub filename: String,
-}
-
-#[derive(Debug)]
-struct APIRequest<'a, 'b> {
-    key: &'a str,
-    email: &'a str,
-    page: u8,
-    iso: u16,
-    event_date: &'b str,
-    event_date_where: &'b str,
 }
 
 impl<'de> Deserialize<'de> for Incident {
@@ -216,56 +174,5 @@ impl<'de> Deserialize<'de> for Incident {
             iso3: json.get("iso3").expect("iso3").to_string(),
             geom: PointType(Point::new(longitude, latitude, Some(4326))),
         })
-    }
-}
-
-impl<'a, 'b> Serialize for APIRequest<'a, 'b> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("APIRequest", 4)?;
-        s.serialize_field("key", &self.key)?;
-        s.serialize_field("email", &self.email)?;
-        s.serialize_field("page", &self.page)?;
-        s.serialize_field("iso", &self.iso)?;
-        s.serialize_field("event_date", &self.event_date)?;
-        s.serialize_field("event_date_where", &self.event_date_where)?;
-        s.end()
-    }
-}
-
-impl<'a> AcledClient<'a> {
-    pub fn new(params: &'a APIParams, iso: u16) -> Self {
-        let end_date = Utc::today().naive_utc();
-        let start_date = end_date - Duration::days(365 * 3);
-
-        AcledClient {
-            client: Client::new(),
-            params: params,
-            iso: iso,
-            start_date: start_date,
-            end_date: end_date,
-        }
-    }
-
-    pub fn get_response(&self, page: u8) -> Response {
-        let event_date = format!("{}|{}", self.start_date, self.end_date);
-        let request_params = APIRequest {
-            key: &self.params.key,
-            email: &self.params.email,
-            page: page,
-            iso: self.iso,
-            event_date: &event_date,
-            event_date_where: "BETWEEN",
-        };
-
-        self.client
-            .get(&self.params.api_url)
-            .query(&request_params)
-            .send()
-            .expect("Failed running request")
-            .json()
-            .expect("Failed parsing json")
     }
 }

@@ -25,13 +25,13 @@ fn process_country<'a>(iso3: &'a str, config: &Config) {
 
         let count = response.count;
 
-        if count > 0 {
-            page += 1;
-            total += count;
-            info!("{count}");
-        } else {
+        if count == 0 {
             break;
         }
+
+        page += 1;
+        total += count;
+        info!("{count}");
     }
     info!("Stored {total} total incidents");
 }
