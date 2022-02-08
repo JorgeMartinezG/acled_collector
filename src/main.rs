@@ -11,27 +11,35 @@ use diesel::PgConnection;
 
 use acled::AcledClient;
 
-use acled::incident::Incident;
 use diesel::prelude::*;
 use log::info;
 
+use diesel::debug_query;
+use diesel::pg::Pg;
 use schema::acled::incidents;
 
 fn process_country<'a>(iso3: &'a str, config: &Config, db_url: &'a str) {
     info!("Processing country {iso3}");
-
-    let acled = AcledClient::new(&config.acled_params, *config.countries.get(iso3).unwrap());
 
     let mut page = 1;
     let mut total = 0;
 
     let conn = PgConnection::establish(db_url).expect("Error connecting to database");
 
+    diesel::delete(incidents::table.filter(incidents::iso3.eq(iso3)))
+        .execute(&conn)
+        .expect("Could not delete rows");
+
+    let stmt = diesel::delete(incidents::table.filter(incidents::iso3.eq(iso3)));
+    println!("{:?}", debug_query::<Pg, _>(&stmt));
+
+    let acled = AcledClient::new(&config.acled_params, *config.countries.get(iso3).unwrap());
+
     loop {
         let response = acled.get_response(page);
-        let items: Vec<Incident> = diesel::insert_into(incidents::table)
+        diesel::insert_into(incidents::table)
             .values(response.data)
-            .get_results(&conn)
+            .execute(&conn)
             .expect("Failed saving results");
 
         let count = response.count;

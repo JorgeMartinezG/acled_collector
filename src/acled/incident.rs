@@ -81,6 +81,8 @@ impl<'de> Deserialize<'de> for Incident {
             event_id_cnty: json
                 .get("event_id_cnty")
                 .expect("event_id_cnty")
+                .as_str()
+                .unwrap()
                 .to_string(),
             event_id_no_cnty: json
                 .get("event_id_no_cnty")
@@ -111,15 +113,29 @@ impl<'de> Deserialize<'de> for Incident {
                 .expect("time_precision is not string")
                 .parse::<i64>()
                 .expect("Failed parsing time_precision"),
-            event_type: json.get("event_type").expect("event_type").to_string(),
+            event_type: json
+                .get("event_type")
+                .expect("event_type")
+                .as_str()
+                .unwrap()
+                .to_string(),
             sub_event_type: json
                 .get("sub_event_type")
                 .expect("sub_event_type")
+                .as_str()
+                .unwrap()
                 .to_string(),
-            actor1: json.get("actor1").expect("actor1").to_string(),
+            actor1: json
+                .get("actor1")
+                .expect("actor1")
+                .as_str()
+                .unwrap()
+                .to_string(),
             assoc_actor_1: json
                 .get("assoc_actor_1")
                 .expect("assoc_actor_1")
+                .as_str()
+                .unwrap()
                 .to_string(),
             inter1: json
                 .get("inter1")
@@ -128,10 +144,17 @@ impl<'de> Deserialize<'de> for Incident {
                 .expect("inter1 is not string")
                 .parse::<i64>()
                 .expect("Failed parsing inter1"),
-            actor2: json.get("actor2").expect("actor2").to_string(),
+            actor2: json
+                .get("actor2")
+                .expect("actor2")
+                .as_str()
+                .unwrap()
+                .to_string(),
             assoc_actor_2: json
                 .get("assoc_actor_2")
                 .expect("assoc_actor_2")
+                .as_str()
+                .unwrap()
                 .to_string(),
             inter2: json
                 .get("inter2")
@@ -140,13 +163,48 @@ impl<'de> Deserialize<'de> for Incident {
                 .expect("inter2 is not string")
                 .parse::<i64>()
                 .expect("Failed parsing inter2"),
-            interaction: json.get("interaction").expect("interaction").to_string(),
-            region: json.get("region").expect("region").to_string(),
-            country: json.get("country").expect("country").to_string(),
-            admin1: json.get("admin1").expect("admin1").to_string(),
-            admin2: json.get("admin2").expect("admin2").to_string(),
-            admin3: json.get("admin3").expect("admin3").to_string(),
-            location: json.get("location").expect("location").to_string(),
+            interaction: json
+                .get("interaction")
+                .expect("interaction")
+                .as_str()
+                .unwrap()
+                .to_string(),
+            region: json
+                .get("region")
+                .expect("region")
+                .as_str()
+                .unwrap()
+                .to_string(),
+            country: json
+                .get("country")
+                .expect("country")
+                .as_str()
+                .unwrap()
+                .to_string(),
+            admin1: json
+                .get("admin1")
+                .expect("admin1")
+                .as_str()
+                .unwrap()
+                .to_string(),
+            admin2: json
+                .get("admin2")
+                .expect("admin2")
+                .as_str()
+                .unwrap()
+                .to_string(),
+            admin3: json
+                .get("admin3")
+                .expect("admin3")
+                .as_str()
+                .unwrap()
+                .to_string(),
+            location: json
+                .get("location")
+                .expect("location")
+                .as_str()
+                .unwrap()
+                .to_string(),
             geo_precision: json
                 .get("geo_precision")
                 .expect("geo_precision not found")
@@ -154,9 +212,24 @@ impl<'de> Deserialize<'de> for Incident {
                 .expect("geo_precision is not string")
                 .parse::<i64>()
                 .expect("Failed parsing geo_precision"),
-            source: json.get("source").expect("source").to_string(),
-            source_scale: json.get("source_scale").expect("source_scale").to_string(),
-            notes: json.get("notes").expect("notes").to_string(),
+            source: json
+                .get("source")
+                .expect("source")
+                .as_str()
+                .unwrap()
+                .to_string(),
+            source_scale: json
+                .get("source_scale")
+                .expect("source_scale")
+                .as_str()
+                .unwrap()
+                .to_string(),
+            notes: json
+                .get("notes")
+                .expect("notes")
+                .as_str()
+                .unwrap()
+                .to_string(),
             fatalities: json
                 .get("fatalities")
                 .expect("fatalities not found")
@@ -171,7 +244,12 @@ impl<'de> Deserialize<'de> for Incident {
                 .expect("timestamp is not string")
                 .parse::<i64>()
                 .expect("Failed parsing timestamp"),
-            iso3: json.get("iso3").expect("iso3").to_string(),
+            iso3: json
+                .get("iso3")
+                .expect("iso3")
+                .as_str()
+                .unwrap()
+                .to_string(),
             geom: PointType(Point::new(longitude, latitude, Some(4326))),
         })
     }
