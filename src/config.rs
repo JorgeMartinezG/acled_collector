@@ -11,7 +11,7 @@ use std::fs::read_to_string;
 pub struct Config {
     pub database: Database,
     pub acled_params: APIParams,
-    pub countries: HashMap<String, String>,
+    pub countries: HashMap<String, u16>,
 }
 
 impl Config {

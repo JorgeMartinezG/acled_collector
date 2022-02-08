@@ -59,7 +59,7 @@ pub struct AcledClient<'a> {
     params: &'a APIParams,
     start_date: NaiveDate,
     end_date: NaiveDate,
-    iso: &'a str,
+    iso: u16,
 }
 
 #[derive(Deserialize, Debug)]
@@ -77,7 +77,7 @@ struct APIRequest<'a, 'b> {
     key: &'a str,
     email: &'a str,
     page: u8,
-    iso: &'a str,
+    iso: u16,
     event_date: &'b str,
     event_date_where: &'b str,
 }
@@ -236,9 +236,9 @@ impl<'a, 'b> Serialize for APIRequest<'a, 'b> {
 }
 
 impl<'a> AcledClient<'a> {
-    pub fn new(params: &'a APIParams, iso: &'a str) -> Self {
+    pub fn new(params: &'a APIParams, iso: u16) -> Self {
         let end_date = Utc::today().naive_utc();
-        let start_date = end_date - Duration::days(365);
+        let start_date = end_date - Duration::days(365 * 3);
 
         AcledClient {
             client: Client::new(),

@@ -10,18 +10,38 @@ use config::Config;
 
 use acled::AcledClient;
 
+use log::info;
+
+fn process_country<'a>(iso3: &'a str, config: &Config) {
+    info!("Processing country {iso3}");
+
+    let acled = AcledClient::new(&config.acled_params, *config.countries.get(iso3).unwrap());
+
+    let mut page = 1;
+    let mut total = 0;
+
+    loop {
+        let response = acled.get_response(page);
+
+        let count = response.count;
+
+        if count > 0 {
+            page += 1;
+            total += count;
+            info!("{count}");
+        } else {
+            break;
+        }
+    }
+    info!("Stored {total} total incidents");
+}
+
 fn main() {
+    env_logger::init();
+
     let config = Config::new();
-    println!("{:?}", config);
 
-    let acled = AcledClient::new(&config.acled_params, config.countries.get("MOZ").unwrap());
-
-    let response = acled.get_response(1);
-
-    response
-        .data
-        .iter()
-        .for_each(|res| println!("{}", res.iso3));
+    process_country("MOZ", &config);
 
     /*
 
