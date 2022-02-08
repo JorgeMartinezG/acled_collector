@@ -1,5 +1,5 @@
 use crate::db::PointType;
-use chrono::NaiveDate;
+use chrono::{Duration, NaiveDate, Utc};
 use serde::ser::{Serialize, SerializeStruct, Serializer};
 use serde::{Deserialize, Deserializer};
 
@@ -13,7 +13,7 @@ use crate::schema::acled::incidents;
 
 #[derive(Queryable, Debug, Insertable)]
 #[table_name = "incidents"]
-struct Incident {
+pub struct Incident {
     data_id: i64,
     iso: i64,
     event_id_cnty: String,
@@ -54,25 +54,32 @@ pub struct APIParams {
 }
 
 #[derive(Debug)]
-pub struct AcledRequest<'a> {
+pub struct AcledClient<'a> {
     client: Client,
     params: &'a APIParams,
+    start_date: NaiveDate,
+    end_date: NaiveDate,
+    iso: &'a str,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct Response {
-    status: u8,
-    success: bool,
-    last_update: i32,
-    count: u32,
-    data: Vec<Incident>,
-    filename: String,
+    pub status: u8,
+    pub success: bool,
+    pub last_update: i32,
+    pub count: u32,
+    pub data: Vec<Incident>,
+    pub filename: String,
 }
 
-pub struct APIRequest<'a> {
-    pub key: &'a str,
-    pub email: &'a str,
-    pub page: u8,
+#[derive(Debug)]
+struct APIRequest<'a, 'b> {
+    key: &'a str,
+    email: &'a str,
+    page: u8,
+    iso: &'a str,
+    event_date: &'b str,
+    event_date_where: &'b str,
 }
 
 impl<'de> Deserialize<'de> for Incident {
@@ -212,7 +219,7 @@ impl<'de> Deserialize<'de> for Incident {
     }
 }
 
-impl<'a> Serialize for APIRequest<'a> {
+impl<'a, 'b> Serialize for APIRequest<'a, 'b> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -221,24 +228,36 @@ impl<'a> Serialize for APIRequest<'a> {
         s.serialize_field("key", &self.key)?;
         s.serialize_field("email", &self.email)?;
         s.serialize_field("page", &self.page)?;
-
+        s.serialize_field("iso", &self.iso)?;
+        s.serialize_field("event_date", &self.event_date)?;
+        s.serialize_field("event_date_where", &self.event_date_where)?;
         s.end()
     }
 }
 
-impl<'a> AcledRequest<'a> {
-    pub fn new(params: &'a APIParams) -> Self {
-        AcledRequest {
+impl<'a> AcledClient<'a> {
+    pub fn new(params: &'a APIParams, iso: &'a str) -> Self {
+        let end_date = Utc::today().naive_utc();
+        let start_date = end_date - Duration::days(365);
+
+        AcledClient {
             client: Client::new(),
             params: params,
+            iso: iso,
+            start_date: start_date,
+            end_date: end_date,
         }
     }
 
-    pub fn get_response(&self) -> Response {
+    pub fn get_response(&self, page: u8) -> Response {
+        let event_date = format!("{}|{}", self.start_date, self.end_date);
         let request_params = APIRequest {
             key: &self.params.key,
             email: &self.params.email,
-            page: 1,
+            page: page,
+            iso: self.iso,
+            event_date: &event_date,
+            event_date_where: "BETWEEN",
         };
 
         self.client

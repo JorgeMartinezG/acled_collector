@@ -11,15 +11,20 @@ use serde_json::Value;
 
 use toml;
 
-use acled::AcledRequest;
+use acled::AcledClient;
 
 fn main() {
     let config = Config::new();
     println!("{:?}", config);
 
-    let acled = AcledRequest::new(&config.acled_params);
+    let acled = AcledClient::new(&config.acled_params, config.countries.get("MOZ").unwrap());
 
-    println!("{:?}", acled);
+    let response = acled.get_response(1);
+
+    response
+        .data
+        .iter()
+        .for_each(|res| println!("{}", res.iso3));
 
     /*
 
