@@ -6,6 +6,7 @@ use crate::acled::APIParams;
 use crate::db::Database;
 
 use std::fs::read_to_string;
+use std::path::PathBuf;
 
 #[derive(Deserialize, Debug)]
 pub struct Config {
@@ -15,8 +16,8 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new() -> Self {
-        let content = read_to_string("config.toml").unwrap();
+    pub fn new(config_file: &PathBuf) -> Self {
+        let content = read_to_string(config_file).unwrap();
 
         let config: Config = toml::from_str(content.as_str()).expect("Cannot read config file");
 

@@ -14,9 +14,17 @@ use acled::AcledClient;
 use diesel::prelude::*;
 use log::info;
 
-use diesel::debug_query;
-use diesel::pg::Pg;
 use schema::acled::incidents;
+
+use std::path::PathBuf;
+use structopt::StructOpt;
+
+#[derive(Debug, StructOpt)]
+#[structopt(name = "AC/DC", about = "Acled client to postgres database")]
+struct Opt {
+    #[structopt(short = "c", long = "config", default_value = "config.toml")]
+    config_file: PathBuf,
+}
 
 fn process_country<'a>(iso3: &'a str, config: &Config, db_url: &'a str) {
     info!("Processing country {iso3}");
@@ -29,9 +37,6 @@ fn process_country<'a>(iso3: &'a str, config: &Config, db_url: &'a str) {
     diesel::delete(incidents::table.filter(incidents::iso3.eq(iso3)))
         .execute(&conn)
         .expect("Could not delete rows");
-
-    let stmt = diesel::delete(incidents::table.filter(incidents::iso3.eq(iso3)));
-    println!("{:?}", debug_query::<Pg, _>(&stmt));
 
     let acled = AcledClient::new(&config.acled_params, *config.countries.get(iso3).unwrap());
 
@@ -58,24 +63,9 @@ fn process_country<'a>(iso3: &'a str, config: &Config, db_url: &'a str) {
 fn main() {
     env_logger::init();
 
-    let config = Config::new();
-
+    let opt = Opt::from_args();
+    let config = Config::new(&opt.config_file);
     let db_url: String = config.get_database_url();
 
     process_country("MOZ", &config, &db_url);
-
-    /*
-
-
-    let results = incidents::table
-        .limit(5)
-        .load::<Incident>(&conn)
-        .expect("Error loading incidents");
-
-    println!("{:?}", results);
-
-
-    items.iter().for_each(|item| println!("{:?}", item));
-
-    */
 }
