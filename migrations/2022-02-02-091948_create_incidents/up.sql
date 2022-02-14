@@ -32,4 +32,6 @@ CREATE TABLE acled.incidents (
     timestamp BIGINT NOT NULL,
     iso3 VARCHAR NOT NULL,
     geom GEOMETRY(POINT, 4326) NOT NULL
-)
+);
+
+CREATE INDEX iso3_idx ON acled.incidents (iso3);

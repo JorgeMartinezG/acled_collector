@@ -55,7 +55,6 @@ fn process_country<'a>(iso3: &'a str, config: &Config, db_url: &'a str) {
 
         page += 1;
         total += count;
-        info!("{count}");
     }
     info!("Stored {total} total incidents");
 }
