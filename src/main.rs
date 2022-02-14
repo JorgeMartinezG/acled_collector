@@ -67,5 +67,8 @@ fn main() {
     let config = Config::new(&opt.config_file);
     let db_url: String = config.get_database_url();
 
-    process_country("MOZ", &config, &db_url);
+    config
+        .countries
+        .iter()
+        .for_each(|(iso3, _code)| process_country(&iso3, &config, &db_url));
 }
