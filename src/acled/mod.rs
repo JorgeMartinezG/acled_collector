@@ -52,27 +52,20 @@ impl APIParams {
 pub struct AcledClient<'a> {
     client: Client,
     params: &'a APIParams,
-    start_date: NaiveDate,
-    end_date: NaiveDate,
     iso: u16,
 }
 
 impl<'a> AcledClient<'a> {
     pub fn new(params: &'a APIParams, iso: u16) -> Self {
-        let end_date = Utc::today().naive_utc();
-        let start_date = end_date - Duration::days(365 * 3);
-
         AcledClient {
             client: Client::new(),
             params: params,
             iso: iso,
-            start_date: start_date,
-            end_date: end_date,
         }
     }
 
     pub fn get_response(&self, page: u8) -> Response {
-        let event_date = format!("{}|{}", self.start_date, self.end_date);
+        let event_date = format!("{}|{}", self.params.start_date, self.params.end_date);
         let request_params = Request {
             key: &self.params.key,
             email: &self.params.email,

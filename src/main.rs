@@ -67,13 +67,10 @@ fn main() {
 
     println!("{:?}", config);
 
-    /*
     let db_url: String = config.get_database_url();
 
     config
         .countries
         .iter()
         .for_each(|(iso3, _code)| process_country(&iso3, &config, &db_url));
-
-    */
 }

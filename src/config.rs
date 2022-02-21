@@ -44,7 +44,7 @@ impl<'de> Deserialize<'de> for Config {
                 .expect("could not get database field")
                 .to_owned(),
         )
-        .expect("could not deserialize database");
+        .expect("could not deserialize database field");
 
         let months = value
             .get("months")
