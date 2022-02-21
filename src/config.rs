@@ -52,12 +52,11 @@ impl<'de> Deserialize<'de> for Config {
             .as_integer()
             .expect("Failed parsing months");
 
-        let params: Value = value
+        let params = value
             .get("acled_params")
-            .expect("could not get acled_params field")
-            .to_owned();
+            .expect("could not get acled_params field");
 
-        let acled_params = APIParams::new(&params, months);
+        let acled_params = APIParams::new(params, months);
 
         let countries: HashMap<String, u16> = Value::try_into(
             value
