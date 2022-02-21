@@ -10,11 +10,42 @@ use incident::Incident;
 use request::Request;
 use response::Response;
 
-#[derive(Deserialize, Debug)]
+use toml::Value;
+
+#[derive(Debug)]
 pub struct APIParams {
     api_url: String,
     key: String,
     email: String,
+    start_date: NaiveDate,
+    end_date: NaiveDate,
+}
+
+impl APIParams {
+    pub fn new(params: &Value, months: i64) -> APIParams {
+        let end_date = Utc::today().naive_utc();
+        let start_date = end_date - Duration::weeks(4 * months);
+
+        APIParams {
+            api_url: params
+                .get("api_url")
+                .expect("Missing api_url")
+                .to_owned()
+                .to_string(),
+            key: params
+                .get("key")
+                .expect("Missing key")
+                .to_owned()
+                .to_string(),
+            email: params
+                .get("email")
+                .expect("Missing email")
+                .to_owned()
+                .to_string(),
+            start_date: start_date,
+            end_date: end_date,
+        }
+    }
 }
 
 #[derive(Debug)]

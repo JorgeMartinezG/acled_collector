@@ -10,15 +10,11 @@ use std::path::PathBuf;
 
 use toml::Value;
 
-use chrono::{Duration, NaiveDate, Utc};
-
 #[derive(Debug)]
 pub struct Config {
     pub database: Database,
     pub acled_params: APIParams,
     pub countries: HashMap<String, u16>,
-    pub start_date: NaiveDate,
-    pub end_date: NaiveDate,
 }
 
 impl Config {
@@ -50,13 +46,18 @@ impl<'de> Deserialize<'de> for Config {
         )
         .expect("could not deserialize database");
 
-        let acled_params: APIParams = Value::try_into(
-            value
-                .get("acled_params")
-                .expect("could not get acled_params field")
-                .to_owned(),
-        )
-        .expect("could not deserialize acled_params");
+        let months = value
+            .get("months")
+            .expect("months not found")
+            .as_integer()
+            .expect("Failed parsing months");
+
+        let params: Value = value
+            .get("acled_params")
+            .expect("could not get acled_params field")
+            .to_owned();
+
+        let acled_params = APIParams::new(&params, months);
 
         let countries: HashMap<String, u16> = Value::try_into(
             value
@@ -66,22 +67,10 @@ impl<'de> Deserialize<'de> for Config {
         )
         .expect("could not deserialize countries");
 
-        let end_date = Utc::today().naive_utc();
-
-        let months = value
-            .get("months")
-            .expect("months not found")
-            .as_integer()
-            .expect("Failed parsing months");
-
-        let start_date = end_date - Duration::weeks(4 * months);
-
         let config = Config {
             database: database,
             acled_params: acled_params,
             countries: countries,
-            start_date: start_date,
-            end_date: end_date,
         };
 
         Ok(config)
